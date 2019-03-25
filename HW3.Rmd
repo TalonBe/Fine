@@ -1,0 +1,562 @@
+---
+title: "Talon Becker FINE 4060 HW3"
+output:
+  pdf_document: default
+  html_document: default
+---
+#### Initializing Document
+##### I have done this to insure that all data will be correctly accounted for and to declare new names for data sets.
+```{r}
+CLT40<-read.csv("~/Desktop/Cohort1940.csv")
+CLT25<-read.csv("~/Desktop/Cohort1925.csv")
+library(dplyr)
+library(pracma)
+summary(CLT40)
+summary(CLT25)
+
+```
+###### Now that we have initailzed the document and set the framework for the questions and ensured the proper datasets will be verified we can begin the questions.
+
+
+# Question 1
+##### The objective of the question is to plot the survial curve of the males and females for both 1925 and 1940 cohorts on seperate plots. Additioanlly, we will contrast the ages 30, 50, and 70 survival rates of the two cohorts.
+### Below is the Female data
+```{r}
+plot(c(0,100),c(0,1),type="n",
+     xlab="Age (members of cohort)",ylab="Fraction Surviving")
+title("Cohort Life Table: Females; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 1:86){
+  points(i-1,CLT40$FEMALE[i]/100000,col="red")
+  points(i-1,CLT25$FEMALE[i]/100000,col="blue")
+}
+text(70,0.9,"1940 Cohort",col="red")
+text(90,0.61,"1925 Cohort",col="blue")
+abline(v=c(30,50,70), lty=4, col="black")
+
+```
+
+
+### Below is the Male Data
+
+```{r}
+plot(c(0,100),c(0,1),type="n",
+     xlab="Age (members of cohort)",ylab="Fraction Surviving")
+title("Cohort Life Table: Males; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 1:86){
+  points(i-1,CLT40$MALE[i]/100000,col="red")
+  points(i-1,CLT25$MALE[i]/100000,col="blue")
+}
+text(75,0.8,"1940 Cohort",col="red")
+text(85,0.55,"1925 Cohort",col="blue")
+abline(v=c(30,50,70), lty=4, col="black")
+```
+
+## Summary of Data Graphs
+### Males 1940 vs Males 1925
+```{r}
+ResultsMM<-matrix(c(CLT25$MALE[30]/100000,CLT25$MALE[50]/100000,
+                    CLT25$MALE[70]/100000,CLT40$MALE[30]/100000,
+                    CLT40$MALE[50]/100000,CLT40$MALE[70]/100000,
+                    (CLT40$MALE[30]-CLT25$MALE[30]),
+                    (CLT40$MALE[50]-CLT25$MALE[50]),
+                    (CLT40$MALE[70]-CLT25$MALE[70]),
+                    (CLT40$MALE[30]-CLT25$MALE[30])/100000,
+                    (CLT40$MALE[50]-CLT25$MALE[50])/100000,
+                    (CLT40$MALE[70]-CLT25$MALE[70])/100000),
+                ncol = 4,
+                byrow = FALSE)
+dimnames(ResultsMM) = list(
+  c("Alive at Age 30","Alive at Age 50","Alive at Age 70"),
+  c("1925 Cohort","1940 Cohort","Difference Total Cohort","Difference in Survival Rates")
+)
+print(ResultsMM)
+```
+
+### Females 1940 vs Females 1925
+
+```{r}
+ResultsFF<-matrix(c(CLT25$FEMALE[30]/100000,CLT25$FEMALE[50]/100000,
+                    CLT25$FEMALE[70]/100000,CLT40$FEMALE[30]/100000,
+                    CLT40$FEMALE[50]/100000,CLT40$FEMALE[70]/100000,
+                    (CLT40$FEMALE[30]-CLT25$FEMALE[30]),
+                    (CLT40$FEMALE[50]-CLT25$FEMALE[50]),
+                    (CLT40$FEMALE[70]-CLT25$FEMALE[70]),
+                    (CLT40$FEMALE[30]-CLT25$FEMALE[30])/100000,
+                    (CLT40$FEMALE[50]-CLT25$FEMALE[50])/100000,
+                    (CLT40$FEMALE[70]-CLT25$FEMALE[70])/100000),
+                ncol = 4,
+                byrow = FALSE)
+dimnames(ResultsFF) = list(
+  c("Alive at Age 30","Alive at Age 50","Alive at Age 70"),
+  c("1925 Cohort","1940 Cohort","Difference Total Cohort","Difference in Survival Rates")
+)
+print(ResultsFF)
+```
+
+## Interpretation of results in Q1
+#### A few notable discoveries can be conculuded:
+##### 1) At all ages regardless of gender, the 1940 Cohort had a higher survival rate than their respective 1925 Cohort. This could be infered to mean that the standard of living may have risen to aid in the well-being of individuals. Additioanaly the 1925 Cohort faced a significant war this could also be influencing the results.
+##### 2) The difference between the cohorts is more significant for Males than Females with the most significant age being 70. This is likely largely influence by factors of the time period especially war. This also suggests that there were more improvements for the men's survaival rates than females over the 15 year period.
+##### 3) Females tend to be declining at a relatively stable pace over the periods being examined compared to males. Men have a significant drop at age 70. This suggests that men are experiencing old Age-related deaths early than females.
+##### 4) The worst possible survival rate examined is Age 70 Males in the 1925 Cohort, with a survival rate of 56.81%
+##### 5) The best possible survival rate examined is Age 30 Females in the 1940 Cohort, with a survival rate of 91.5%
+##### 6) The most significant change in survival rates is Age 70 Males, with an improvement of 12.65%
+
+#### Additionally, these trends would likely be even more significant when comparing an even more aged cohort like 1900 to the 1940 or when comparing a less economically developed country to Canada's Data.
+
+# Question 2
+##### The objective of this question is to derive the one-year mortality rates in a vector for both genders of the 1940 cohort and contrast to the 1925 results.
+
+```{r}
+qx25_m<-(-diff(CLT25$MALE))/CLT25$MALE[-length(CLT25$MALE)]
+qx25_f<-(-diff(CLT25$FEMALE))/CLT25$FEMALE[-length(CLT25$FEMALE)]
+qx40_m<-(-diff(CLT40$MALE))/CLT40$MALE[-length(CLT40$MALE)]
+qx40_f<-(-diff(CLT40$FEMALE))/CLT40$FEMALE[-length(CLT40$FEMALE)]
+
+summary(qx25_f)
+summary(qx40_f)
+summary(qx25_m)
+summary(qx40_m)
+```
+
+#### To Summarize the Resutls
+
+```{r}
+Life<-matrix(c(which.min(qx25_f)-1,which.min(qx25_m)-1,which.min(qx40_f)-1,
+               which.min(qx40_m)-1,which.max(qx25_f)-1,which.max(qx25_m)-1,
+               which.max(qx40_f)-1,which.max(qx40_m)-1),
+             ncol=2,
+             byrow = FALSE)
+dimnames(Life) = list(
+  c("Female 1925","Male 1925","Female 1940","Male 1940"),
+  c("Best Age","Worst Age")
+)
+print(Life)
+
+plot(c(0,70),c(0,0.14),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Rate by Age: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 1:70){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(60,0.08,"1925 Female Cohort",col="Dark red")
+text(55,0.07,"1940 Female Cohort",col="Dark Orange")
+text(50,0.06,"1925 Male Cohort",col="Dark Blue")
+text(45,0.05,"1940 Male Cohort",col="Dark Green")
+text(1,0.13,"Infant",col="Black")
+text(11,0.13,"Youth",col="Black")
+text(24,0.13,"Young Adult",col="Black")
+text(37,0.13,"Adulthood",col="Black")
+text(56,0.13,"Retirement",col="Black")
+text(69,0.13,"Old Age",col="Black")
+abline(v=c(5,18,30,45,65))
+```
+
+#### Looking further at each segment in depth
+```{r}
+plot(c(5,18),c(0,0.01),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Rate Youth: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 6:19){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(14,0.008,"1925 Female Cohort",col="Dark red")
+text(14,0.007,"1940 Female Cohort",col="Dark Orange")
+text(14,0.006,"1925 Male Cohort",col="Dark Blue")
+text(14,0.005,"1940 Male Cohort",col="Dark Green")
+
+plot(c(18,30),c(0,0.01),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Rate Young Adult: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 19:31){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(26,0.008,"1925 Female Cohort",col="Dark red")
+text(26,0.007,"1940 Female Cohort",col="Dark Orange")
+text(26,0.006,"1925 Male Cohort",col="Dark Blue")
+text(26,0.005,"1940 Male Cohort",col="Dark Green")
+
+plot(c(30,45),c(0,0.01),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Rate Adulthood: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 31:46){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(33,0.008,"1925 Female Cohort",col="Dark red")
+text(33,0.007,"1940 Female Cohort",col="Dark Orange")
+text(33,0.006,"1925 Male Cohort",col="Dark Blue")
+text(33,0.005,"1940 Male Cohort",col="Dark Green")
+
+plot(c(45,65),c(0,0.025),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Retirement: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 46:66){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(49,0.02,"1925 Female Cohort",col="Dark red")
+text(49,0.018,"1940 Female Cohort",col="Dark Orange")
+text(49,0.016,"1925 Male Cohort",col="Dark Blue")
+text(49,0.014,"1940 Male Cohort",col="Dark Green")
+
+plot(c(65,69),c(0,0.04),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("Mortality Old Age: Canada; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 66:71){
+  points(i-1,qx25_f[i],col="Dark red")
+  points(i-1,qx40_f[i],col="Dark Orange")
+  points(i-1,qx25_m[i],col="Dark Blue")
+  points(i-1,qx40_m[i],col="Dark Green")
+}
+text(66,0.04,"1925 Female Cohort",col="Dark red")
+text(66,0.037,"1940 Female Cohort",col="Dark Orange")
+text(66,0.034,"1925 Male Cohort",col="Dark Blue")
+text(66,0.031,"1940 Male Cohort",col="Dark Green")
+```
+
+## The results of the above patterns can be concluded as the following:
+### Infant Age: 
+#### 1) The high mortality rate for infants is still present in the first year. However, these rates are dropping for the newer cohort with a significant reduction for both genders. SIDS and Still births are likely the reasoning behind these death rates.
+#### 2) The death rate stabilizes near age 4 as the cohort progresses into their youth years.
+### Youth Age:
+#### 1) These are the most stable years of a humans life within the two cohorts.
+#### 2) A steady trend is observed that death rates begin to increase around age 16, except for the 1940 female cohort. 
+#### 3) All cohorts are still below a 0.4% Death rate when entering into Young Adulthood.
+### Young Adult Age:
+#### 1) The spike that was noted in the Youth Age has peaked and is on the decline till age 30. This suggests that their may be a significant economic event that triggered a lot of deaths around ages 16-18, the war may be the leading cause of this.
+#### 2) For men, Age 22,24, and 28 each see little reduction between the cohorts and possibly an increase for age 28.
+### Adulthood Age:
+#### 1) For men, Age 31,33,and 34-40 each see little reduction between the cohorts and possibly an increase for age 34. 
+#### 2) For men, there is a massive reduction at age 41, for the newer cohort.
+#### 3) For women, there is actually an increase in death rates at age 31 from the 1925 cohort to the 1940 cohort. Perhaps, women may have been delaying having kids and an increased childbirth rate in their 30's caused this spike of death among the cohort. This was also the era of the 1970's for the cohort, perhaps, more drug related deaths could be a rational reason. 
+### Retirement Age:
+#### 1) This is the part where the slope of death rates truly begin.
+#### 2) All cohorts tested yielded higher death rates at age 65 than 45. 
+#### 3) There is an odd dip in the 1925 Female cohort around age 55 suggesting that their may or may not be an event that effected the cohort.
+### Old Age:
+#### 1) The most notable reduction is for males in this time period, as death rates Year over Year increase less in the 1940 cohort than the 1925 cohort.
+#### 2) This reduction is still there for females but not as noticable.
+
+#Question 3
+##### The objective of this question is to comput the average amount by which q40 and q60 differ for each respective cohort. Additionally, the annual rate of change.
+
+```{r}
+ChangeM<-function(A){qx40_m[A]-qx25_m[A]}
+ChangeF<-function(A){qx40_f[A]-qx25_f[A]}
+DiffF<-function(A,B){qx40_f[A]-qx25_f[B]}
+ReductionF<-function(A){(qx40_f[A])/qx25_f[A]-1}
+ReductionM<-function(A){(qx40_m[A])/qx25_m[A]-1}
+AnnualRF<-function(A){-nthroot(ReductionF(A)+1,15)+1}
+AnnualRM<-function(A){-nthroot(ReductionM(A)+1,15)+1}
+Q3<-matrix(c(qx25_m[c(41,66)],qx25_f[c(41,66)],
+             qx40_m[c(41,66)],qx40_f[c(41,66)],
+             ChangeM(c(41,66)),ChangeF(c(41,66)),
+             ReductionM(c(41,66)),ReductionF(c(41,66)),
+             AnnualRM(c(41,66)),AnnualRF(c(41,66))),
+             ncol = 5,
+             byrow = FALSE
+             )
+dimnames(Q3) = list(
+  c("Age 40 Male","Age 65 Male","Age 40 Female","Age 65 Female"),
+  c("1940 Cohort Mortality Rate","1925 Cohort Mortality Rate",
+    "Difference Between Cohorts","Reduction Over 15 Years (%)",
+    "Average Annual Rate of Change")
+)
+Q3
+
+
+plot.function(ReductionF,0,1,80, 
+              ylab = "Reduction in moratlity rates between cohorts", 
+              xlab = "Age")
+title("Mortality Reduction: Canada; Females; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+abline(v=c(41,66), col = "Green")
+abline(h=0, col ="Red")
+
+plot.function(ReductionM,0,1,80, 
+              ylab = "Reduction in moratlity rates between cohorts", 
+              xlab = "Age")
+title("Mortality Reduction: Canada; Males; 1925 vs 1940")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+abline(v=c(41,66), col = "Green")
+
+Q3b<-matrix(c(which.max(ReductionF(0:80))-1,which.max(ReductionM(0:80))-1,
+              which.min(ReductionF(0:80))-1,which.min(ReductionM(0:80))-1),
+            ncol = 2,
+            byrow = TRUE)
+dimnames(Q3b) = list(
+  c("Worst Age Reduction","Best Age Reduction"),
+  c("Females", "Males")
+)
+Q3b
+
+plot(c(0,95),c(-8,-1),type="n",
+     xlab="Age (members of cohort)",ylab="Death Rate")
+title("(Natural) Log Mortality Rate: Canada 1925 Cohort")
+mtext("Source: HM Database",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 35:86){
+  points(i-1,log(qx40_f[i]),col="red")
+  points(i-1,log(qx40_m[i]),col="blue")
+  points(i-1,log(qx25_m[i]),col="Green")
+  points(i-1,log(qx25_f[i]),col="Orange")
+}
+text(80,-6,"1940 Females",col="red")
+text(25,-5,"1940 Males",col="blue")
+text(80,-5,"1925 Females",col="Orange")
+text(25,-4,"1925 Males",col="Green")
+```
+
+### Summary Q3
+#### The Female Cohort had one year of increases instead of reduction at the age of 31. This is the only one found across all data sets examined.
+#### The worst age for both genders are in the 30's in terms of reduction. Suggesting that either that age is already low death rates and the improvements in living longer come from other areas of the lifecycle.
+#### The best improvements are vastly different between the genders. Females best year is at age 17 at about 72%. Males had their best reduction in the first year with about a 67% reduction. 
+#### For females, the reduction is about the same for ages 40 and 65 whereas, for males age 65 is signifcantly lower than at age 40. This suggests there were improvements in increasing the longevity of males. 
+
+#### From the graph above it is clear that the death rates are decreasing more for females than males from age 35 to 85 compared to males. 
+
+
+#Question 4
+
+```{r}
+Q4<-matrix(c(0.0754145,0.070956,0.075164,0.08079,
+             -9.7285916,-8.964848,-9.458603,-9.12376,
+             0.04467,0.06977,0.07122,0.0729,
+             0.9967,0.9909,0.9915,0.9923),
+           ncol = 4,
+           byrow = FALSE)
+dimnames(Q4) = list(
+  c("1940 Female Cohort","1940 Male Cohort",
+    "1925 Female Cohort","1925 Male Cohort"),
+  c("X growth Estimate","X Intercept Estimate", 
+    "Model Residual Standard Error", "Adjusted R-Squared")
+)
+Q4
+
+
+
+y40f<-log(qx40_f[35:69])
+x<-35:69
+fit40F<-lm(y40f~x)
+summary(fit40F)
+
+y40m<-log(qx40_m[35:69])
+fit40M<-lm(y40m~x)
+summary(fit40M)
+
+y25f<-log(qx25_f[35:69])
+fit25F<-lm(y25f~x)
+summary(fit25F)
+
+y25m<-log(qx25_m[35:69])
+fit25M<-lm(y25m~x)
+summary(fit25M)
+```
+
+### Discussion of the Results:
+##### 1) All the regression results have an Adjusted R-Squared of 0.99+. Which means all the cohorts/genders are modelled in a way that the variable estimates can explain significantly the changes.
+##### 2) The highest growth in death rate projects in the 1925 Male cohort while the lowest is the 1940 Male cohort. Which suggests that there is a significant improvement to the quality of live for the male population over the time.
+##### 3) The female growth rates remained roughly the same at 0.75, with the 1940 cohort being slightly higher by 0.003. This is statistically insignificant. 
+##### 4) The intercept is rather insignificant as life time model is not linear but rather resembles a polynomial function. The intercept would repersent the deaths at birth/first year. However, through statistical evidence we know this is false due to the higher infant mortaility rates than 9.72 babies.
+##### 5) Finally, we are confirmed that with the small standard error the model accurately fits the data.
+
+
+
+#Question 5
+
+```{r}
+new40_qm<-qx40_m[70]*exp(c(1:31)*0.0709560)
+Tqx40_m<-append(qx40_m,new40_qm)
+LT40_m<-100000*cumprod(1-Tqx40_m)
+LT40_m<-append(LT40_m,100000,after=0)
+
+new40_qf<-qx40_f[70]*exp(c(1:31)*0.0754145)
+Tqx40_f<-append(qx40_f,new40_qf)
+LT40_f<-100000*cumprod(1-Tqx40_f)
+LT40_f<-append(LT40_f,100000,after=0)
+
+plot(c(60,100),c(0,0.04),type="n",
+     xlab="Age (at death)",ylab="Probability")
+title("Probability Mass Function: Remaining Lifetime at 40")
+mtext("HMD 1925 Canadian Cohort",side=3,line=0.3,font=4)
+grid(ny=18,lty=20)
+for (i in 66:101){
+  points(i,(LT40_f[i-1]-LT40_f[i])/LT40_f[65],col="red",pch=16)
+  points(i,(LT40_m[i-1]-LT40_m[i])/LT40_f[65],col="blue",pch=16)
+}
+text(90,0.037,"Females",col="red")
+text(70,0.037,"Males",col="blue")
+abline(v=100, col = "Green")
+
+Q5<-matrix(c((LT40_f[101]/LT40_f[66]),
+              LT40_m[101]/LT40_m[66]),
+           ncol = 2
+)
+dimnames(Q5) = list("Probability of Living to 100",c("Females","Males"))
+Q5
+
+
+```
+
+### Having forecasted the data to death at age 100 there is a few trends.
+#### Males begin the probability of death peak befort females. 
+#### Females have a higher probability at later ages compared to men
+#### Females have a lower probability at early ages compared to men.
+
+
+
+
+#Question 6
+
+```{r}
+new40_qm<-qx40_m[70]*exp(c(1:31)*0.0609560)
+Tqx40_m<-append(qx40_m,new40_qm)
+LT40_m6<-100000*cumprod(1-Tqx40_m)
+LT40_m6<-append(LT40_m6,100000,after=0)
+
+new40_qm<-qx40_m[70]*exp(c(1:31)*0.0809560)
+Tqx40_m<-append(qx40_m,new40_qm)
+LT40_m8<-100000*cumprod(1-Tqx40_m)
+LT40_m8<-append(LT40_m8,100000,after=0)
+
+new40_qf<-qx40_f[70]*exp(c(1:31)*0.0654145)
+Tqx40_f<-append(qx40_f,new40_qf)
+LT40_f6<-100000*cumprod(1-Tqx40_f)
+LT40_f6<-append(LT40_f6,100000,after=0)
+
+new40_qf<-qx40_f[70]*exp(c(1:31)*0.0854145)
+Tqx40_f<-append(qx40_f,new40_qf)
+LT40_f8<-100000*cumprod(1-Tqx40_f)
+LT40_f8<-append(LT40_f8,100000,after=0)
+
+Q6<-matrix(c(LT40_m6[101]/LT40_m6[66],
+            LT40_f6[101]/LT40_f6[66],
+            LT40_m[101]/LT40_m[66],
+            LT40_f[101]/LT40_f[66],
+            LT40_m8[101]/LT40_m8[66],
+            LT40_f8[101]/LT40_f8[66],
+            LT40_m6[101]/LT40_m6[66]-LT40_m8[101]/LT40_m8[66],
+            LT40_f6[101]/LT40_f6[66]-LT40_f8[101]/LT40_f8[66]),
+           ncol = 4
+)
+dimnames(Q6) = list(c("Male","Female"),
+              c("-1% to Growth","Base Case",
+                "+1% to Growth","Range of +/- 1%"))
+Q6
+
+```
+### Confidence Level with the forecast - Moderate to Weak
+#### I have a low confidence in this model overall due to several reasons:
+##### 1) The projects may be strong in the first few years as there is a low time constrant. However, as the timeline increases into the 20+ years I begin to lose faith as the model projects that nearly a hundred from each cohort should be alive at age 118. Which does not hold to the reality of world we live in where most individuals fail to even make it to age 100.
+##### 2) Though the model does have a high F-stat which is a great indicator for the model fitting the data. It fails to capture the expontential increase in death rates rather than the linear one we have projected. As humans tend to be more prone to diseases due to weakend immune systems in their later years the model fails to capture this rapid increase in life expectancy. 
+##### 3) The model is great for seperating the males data from females data as there is significant factors that influence the genders differently.
+##### 4) The model also fails to grasp the influence of wealth into health. As those who are more established in life can maintain high medical costs and had survived longer on quality food which could add to longevity in life expectancy.
+##### 5) By changing the growth rate just up and down 1% from the statistical summary result yielded significantly different values for those who will live to age in each cohort. This is significant as a 1% decrease to growth rates for females resulted in 8% more females reaching age 100 from the base case growth in death rates. This is significant and pokes a flaw in the model as if the projected growth rates are different than the actual results in the later years could indicate troubles in pension and policy planning in the future.
+#### An area of growth for the model would be to expand it to a polynomial smoothing function that would be based on various categories such as geographical location, financial wealth/per year, health levels and various other compentents that could help indicate factors that influence the life expectancy of an individual. It should be noted that this model is a great simplistic tool to estimate the longevity of the cohort.
+
+#### The two biggest caveats for error in the model is:
+##### 1) Projection Time - Longer times mean less accuracy in future
+##### 2) Growth estimate -  The less responsive this value is the less accuracy.
+
+
+
+
+#Question 7
+##### Up to now, we have extended the data to those living to age 100 for the cohort. However, given canadian statistics, to assume the entire cohort would be dead by 100 is absurd. Thus, I extended the data to the age of 118 (The Oldest know person). This change in data will help to forecast with more accuracy; note it will raise the required value due to the longer portfolio lifespan but the reduced cost of longevity risk will compensate this increase.
+```{r}
+new40_qm<-qx40_m[70]*exp(c(1:48)*0.0709560)
+Tqx40_m<-append(qx40_m,new40_qm)
+LT40_m<-100000*cumprod(1-Tqx40_m)
+LT40_m<-append(LT40_m,100000,after=0)
+
+new40_qf<-qx40_f[70]*exp(c(1:48)*0.0754145)
+Tqx40_f<-append(qx40_f,new40_qf)
+LT40_f<-100000*cumprod(1-Tqx40_f)
+LT40_f<-append(LT40_f,100000,after=0)
+
+my_vector <- vector("numeric", 10L)
+for(i in 72:120) my_vector[i] <- (LT40_m[i]/LT40_m[71])
+remove<-c(NA,0)
+M40LP<-cbind(setdiff(my_vector,remove))
+
+my_vector2 <- vector("numeric", 10L)
+for(i in 72:120) my_vector2[i] <- (LT40_f[i]/LT40_f[71])
+F40LP<-cbind(setdiff(my_vector2,remove))
+
+W40LP<-cbind(M40LP,F40LP)
+D<-as.data.frame(W40LP)
+colnames(D)<-c("Male","Female")
+DP<-D %>%
+  mutate(0.5*Male+0.5*Female) %>%
+  mutate(0.75*Male+0.25*Female) %>%
+  mutate(0.25*Male+0.75*Female)
+colnames(DP)<-c("Male","Female","HalfEach","75% Male","25% Male")
+DP
+
+Q7B<-DP$Male
+Q7C<-DP$Female
+
+LLP<-function(PortionFemale){
+  Q7C*PortionFemale+Q7B*(1-PortionFemale)
+}
+
+CCP<-function(PortionFemale){
+  sum(LLP(PortionFemale))*25000
+}
+PPP<-function(PortionFemale,SizePortfolio){
+  CCP(PortionFemale)*SizePortfolio
+}
+plot(c(0,1),c(4000000000,5500000000),type="n",
+     xlab="Portion Female ",ylab="Pension Nest Egg")
+title("Pension Nest Egg for 10000 70-Year olds for Life")
+grid(ny=18,lty=20)
+for (i in seq(0,1,0.01)){
+  points(i,PPP(i,10000),col="Green",pch=16)
+}
+points(1,PPP(1,10000),col="Red",pch=16)
+points(0,PPP(0,10000),col="Blue",pch=16)
+text(0.5, 4550000000, "Mixed Portfolio", col = "green")
+text(0.15,4200000000, "All Male Portfolio", col = "blue")
+text(0.73,5450000000, "All Female Portfolio", col = "Red")
+
+PPP(1,10000)
+PPP(0,10000)
+```
+
+
+### By ignoring interest rates, there is no discounting the sum. 
+### I have estimated that the amount to set aside should range between 4.38 Billion and 5.42 Billion to cover the 10000 70 Year old individuals for life.
+#### A caveat in this value and range of values is due to the nature of WHO is in the portfolio. Since statistically women outlive men in longer age projections than the cost to service a female pensioner is higher than a male pensioner due to longevity. For this reason the portfolio nest egg is on a linear function of Egg =  4,380,720,927 + 1,038,864,062(Portion of Pension fund that is Female). The graph above shows this relationship.
+##### Increasing the age projections created the range of values to be larger and the cost to service each gender also increased due to accounting for more years of possible lifespans. Death at age 100 is unrealistic, having an overestimate for those living to age 118 would leave the pension fund with more financial freedom in the long-term. 
+
+
